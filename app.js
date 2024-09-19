@@ -1,7 +1,8 @@
 const express = require('express');
 const app = express();
-const userRoutes = require('./routes/user');  // Make sure the path is correct
-const adminRoutes = require('./routes/admin');  // Make sure the path is correct
+const userRoutes = require('./routes/user');  // User routes
+const adminRoutes = require('./routes/admin');  // Admin routes
+const promoRoutes = require('./routes/promoCode');  // Promo code routes
 const { sequelize } = require('./models'); // Sequelize instance
 const dotenv = require('dotenv');
 const morgan = require('morgan');
@@ -17,12 +18,10 @@ app.use(morgan('dev')); // HTTP request logger
 app.use(helmet()); // Secure HTTP headers
 app.use(cors()); // Enable CORS
 
-
-// Use the user and admin routes
-app.use('/', userRoutes);  // Changed to avoid route conflicts
-app.use('/', adminRoutes);  // Changed to avoid route conflicts
-
-
+// Use the user, admin, and promo routes
+app.use('/', userRoutes);
+app.use('/', adminRoutes);
+app.use('/', promoRoutes); // Promo code routes
 
 // Start the server after ensuring database connection
 const PORT = process.env.PORT || 8000;
@@ -40,7 +39,6 @@ const startServer = async () => {
       });
   } catch (error) {
       console.error('Unable to connect to the database:', error);
-      // Log more details if needed
       console.error('Detailed error:', error.original || error.message || error);
   }
 };
