@@ -1,41 +1,53 @@
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
+// app.js
 
-var indexRouter = require('./routes/index');
-var usersRouter = require('./routes/users');
+const express = require('express');
+const app = express();
+const userRoutes = require('./routes/user');
+const adminRoutes = require('./routes/admin');
+const { sequelize } = require('./models'); // Sequelize instance
+const dotenv = require('dotenv');
+const morgan = require('morgan');
+const helmet = require('helmet');
+const cors = require('cors');
 
-var app = express();
+// Load environment variables from .env
+dotenv.config();
 
-// view engine setup
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'jade');
-
-app.use(logger('dev'));
+// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(morgan('dev')); // HTTP request logger
+app.use(helmet()); // Secure HTTP headers
+app.use(cors()); // Enable CORS
 
-app.use('/', indexRouter);
-app.use('/users', usersRouter);
+// Use the user and admin routes
+app.use('/', userRoutes);
+app.use('/', adminRoutes);
 
-// catch 404 and forward to error handler
-app.use(function(req, res, next) {
-  next(createError(404));
+// Default Route (Optional)
+app.get('*', (req, res) => {
+    res.status(404).json({ message: 'Route not found' });
 });
 
-// error handler
-app.use(function(err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
+// Start the server after ensuring database connection
+const PORT = process.env.PORT || 5000;
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
+const startServer = async () => {
+  try {
+      await sequelize.authenticate();
+      console.log('Database connected successfully.');
 
-module.exports = app;
+      // Sync models
+      await sequelize.sync({ alter: true });
+
+      app.listen(PORT, () => {
+          console.log(`Server is running on port ${PORT}.`);
+      });
+  } catch (error) {
+      console.error('Unable to connect to the database:', error);
+      // Log more details if needed
+      console.error('Detailed error:', error.original || error.message || error);
+  }
+};
+
+
+startServer();
