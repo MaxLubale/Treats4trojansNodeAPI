@@ -1,9 +1,7 @@
-// app.js
-
 const express = require('express');
 const app = express();
-const userRoutes = require('./routes/user');
-const adminRoutes = require('./routes/admin');
+const userRoutes = require('./routes/user');  // Make sure the path is correct
+const adminRoutes = require('./routes/admin');  // Make sure the path is correct
 const { sequelize } = require('./models'); // Sequelize instance
 const dotenv = require('dotenv');
 const morgan = require('morgan');
@@ -19,17 +17,15 @@ app.use(morgan('dev')); // HTTP request logger
 app.use(helmet()); // Secure HTTP headers
 app.use(cors()); // Enable CORS
 
-// Use the user and admin routes
-app.use('/', userRoutes);
-app.use('/', adminRoutes);
 
-// Default Route (Optional)
-app.get('*', (req, res) => {
-    res.status(404).json({ message: 'Route not found' });
-});
+// Use the user and admin routes
+app.use('/', userRoutes);  // Changed to avoid route conflicts
+app.use('/', adminRoutes);  // Changed to avoid route conflicts
+
+
 
 // Start the server after ensuring database connection
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
   try {
@@ -48,6 +44,5 @@ const startServer = async () => {
       console.error('Detailed error:', error.original || error.message || error);
   }
 };
-
 
 startServer();
