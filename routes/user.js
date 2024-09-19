@@ -23,10 +23,7 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
-// Welcome route
-router.get('/', (req, res) => {
-    res.send('Hello! Welcome to TREATS4TROJANS');
-});
+
 
 // Register user route
 router.post(
@@ -111,7 +108,7 @@ router.post(
             const accessToken = jwt.sign(
                 { email: user.email, id: user.id },
                 process.env.JWT_SECRET,
-                { expiresIn: '1h' }
+                { expiresIn: '8h' }
             );
 
             res.status(200).json({ access_token: accessToken });
