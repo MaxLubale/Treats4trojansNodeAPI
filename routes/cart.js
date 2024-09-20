@@ -1,77 +1,126 @@
 const express = require('express');
-const Cart = require('../models/cart');
-const CartItem = require('../models/cartItem');
-const Product = require('../models/product');
-
 const router = express.Router();
+const { Cart, CartItem, Product, User } = require('../models');  // Assuming models are defined with Sequelize
+const { authenticateJWT } = require('../middleware/auth');  // JWT authentication middleware
 
-// 1. Fetch all products in the cart (READ)
-router.get('/:userId', async (req, res) => {
-    try {
-        const cart = await Cart.findOne({
-            where: { userId: req.params.userId },
-            include: {
-                model: Product,
-                through: { attributes: ['quantity'] }  // Include quantity from CartItem
-            }
-        });
+// Route to fetch cart items
+router.get('/api/cart', authenticateJWT, async (req, res) => {
+  try {
+    const currentUser = req.user;  // JWT payload contains user information
+    const email = currentUser.email;
 
-        if (cart) {
-            res.status(200).json(cart);
-        } else {
-            res.status(404).json({ message: 'Cart not found' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Error fetching cart', error });
+    if (!email) {
+      return res.status(401).json({ message: 'Invalid token' });
     }
+
+    const user = await User.findOne({ where: { email }, include: Cart });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const cart = user.Carts[0];  // Assuming user has one cart
+    if (!cart) {
+      return res.status(200).json([]);  // Return empty array if no cart
+    }
+
+    const cartItems = await CartItem.findAll({ where: { cart_id: cart.id }, include: Product });
+    if (cartItems.length === 0) {
+      return res.status(200).json([]);  // Return empty array if no items
+    }
+
+    const result = cartItems.map(item => ({
+      product_id: item.Product.id,
+      name: item.Product.name,
+      price: item.Product.price,
+      quantity: item.quantity
+    }));
+
+    return res.status(200).json(result);
+  } catch (error) {
+    return res.status(500).json({ message: 'Error retrieving cart items' });
+  }
 });
 
-// 2. Add or update a product in the cart (CREATE/UPDATE)
-router.post('/:userId', async (req, res) => {
-    const { productId, quantity } = req.body;
-    try {
-        // Find or create the cart for the user
-        let cart = await Cart.findOne({ where: { userId: req.params.userId } });
-        if (!cart) {
-            cart = await Cart.create({ userId: req.params.userId });
-        }
+// Route to update cart item quantity
+router.post('/api/cart/update', authenticateJWT, async (req, res) => {
+  const { product_id, quantity } = req.body;
 
-        // Check if the product is already in the cart
-        let cartItem = await CartItem.findOne({ where: { cartId: cart.id, productId } });
-
-        if (cartItem) {
-            // If product is already in the cart, update the quantity
-            cartItem.quantity += quantity;
-            await cartItem.save();
-        } else {
-            // If product is not in the cart, add it
-            await CartItem.create({ cartId: cart.id, productId, quantity });
-        }
-
-        res.status(200).json({ message: 'Product added/updated in cart' });
-    } catch (error) {
-        res.status(500).json({ message: 'Error updating cart', error });
+  try {
+    const currentUser = req.user;
+    const user = await User.findOne({ where: { email: currentUser.email }, include: Cart });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    const cartItem = await CartItem.findOne({ where: { cart_id: user.Carts[0].id, product_id } });
+    if (!cartItem) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    cartItem.quantity = quantity;
+    await cartItem.save();
+
+    return res.status(200).json({ message: 'Cart item updated successfully!' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error updating cart item' });
+  }
 });
 
-// 3. Remove a product from the cart (DELETE)
-router.delete('/:userId/product/:productId', async (req, res) => {
-    try {
-        const cart = await Cart.findOne({ where: { userId: req.params.userId } });
-        if (!cart) {
-            return res.status(404).json({ message: 'Cart not found' });
-        }
+// Route to remove a cart item
+router.delete('/api/cart/remove', authenticateJWT, async (req, res) => {
+  const { product_id } = req.body;
 
-        const cartItem = await CartItem.findOne({ where: { cartId: cart.id, productId: req.params.productId } });
-        if (cartItem) {
-            await cartItem.destroy();
-            res.status(200).json({ message: 'Product removed from cart' });
-        } else {
-            res.status(404).json({ message: 'Product not found in cart' });
-        }
-    } catch (error) {
-        res.status(500).json({ message: 'Error removing product from cart', error });
+  try {
+    const currentUser = req.user;
+    const user = await User.findOne({ where: { email: currentUser.email }, include: Cart });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
     }
+
+    const cartItem = await CartItem.findOne({ where: { cart_id: user.Carts[0].id, product_id } });
+    if (!cartItem) {
+      return res.status(404).json({ message: 'Cart item not found' });
+    }
+
+    await cartItem.destroy();
+    return res.status(200).json({ message: 'Cart item removed successfully!' });
+  } catch (error) {
+    return res.status(500).json({ message: 'Error removing cart item' });
+  }
 });
+
+// Helper function to calculate the total amount for a user's cart
+const getUserCart = async (user_id) => {
+  try {
+    const user = await User.findOne({ where: { id: user_id }, include: Cart });
+    if (!user) {
+      return { message: 'User not found', status: 404 };
+    }
+
+    const cart = await Cart.findOne({ where: { user_id: user.id }, include: CartItem });
+    if (!cart) {
+      return { message: 'Cart not found', status: 404 };
+    }
+
+    const cartItems = await CartItem.findAll({ where: { cart_id: cart.id }, include: Product });
+    if (cartItems.length === 0) {
+      return { message: 'No items in the cart', status: 404 };
+    }
+
+    let totalAmount = 0.0;
+    for (const item of cartItems) {
+      const product = await Product.findByPk(item.product_id);
+      if (product) {
+        totalAmount += product.price * item.quantity;
+      } else {
+        return { message: `Product with ID ${item.product_id} not found`, status: 404 };
+      }
+    }
+
+    return { totalAmount, status: 200 };
+  } catch (error) {
+    return { message: 'Error retrieving cart items', status: 500 };
+  }
+};
 
 module.exports = router;

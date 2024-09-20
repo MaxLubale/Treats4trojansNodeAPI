@@ -13,7 +13,7 @@ Cart.init(
       allowNull: false,
     },
     user_id: {
-      type: DataTypes.STRING(6),
+      type: DataTypes.INTEGER,  // Assuming User's id is an integer
       allowNull: false,
       references: {
         model: User,
@@ -25,8 +25,9 @@ Cart.init(
     sequelize,
     modelName: 'Cart',
     tableName: 'carts',
-    timestamps: false,
+    timestamps: false,  // Set to true if you want createdAt/updatedAt fields
   }
 );
+
 
 module.exports = Cart;
