@@ -3,6 +3,8 @@ const app = express();
 const userRoutes = require('./routes/user');  // User routes
 const adminRoutes = require('./routes/admin');  // Admin routes
 const promoRoutes = require('./routes/promoCode');  // Promo code routes
+const cartRoutes = require('./routes/cart')
+const productRoutes = require('./routes/Product')
 const { sequelize } = require('./models'); // Sequelize instance
 const dotenv = require('dotenv');
 const morgan = require('morgan');
@@ -22,6 +24,8 @@ app.use(cors()); // Enable CORS
 app.use('/', userRoutes);
 app.use('/', adminRoutes);
 app.use('/', promoRoutes); // Promo code routes
+app.use('/', cartRoutes)
+app.use('/', productRoutes)
 
 // Start the server after ensuring database connection
 const PORT = process.env.PORT || 8000;

@@ -16,6 +16,7 @@ Cart.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 Cart.hasMany(CartItem, { foreignKey: 'cart_id', as: 'items' });
 CartItem.belongsTo(Cart, { foreignKey: 'cart_id', as: 'cart' });
 
+
 // Product <-> CartItem
 Product.hasMany(CartItem, { foreignKey: 'product_id', as: 'cartItems' });
 CartItem.belongsTo(Product, { foreignKey: 'product_id', as: 'product' });
