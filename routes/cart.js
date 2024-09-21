@@ -41,6 +41,46 @@ router.get('/api/cart', authenticateJWT, async (req, res) => {
   }
 });
 
+// Route to add items to cart
+router.post('/api/cart', authenticateJWT, async (req, res) => {
+  const { product_id, quantity } = req.body;
+  const currentUser = req.user; // Assuming your JWT middleware sets req.user
+
+  try {
+    const user = await User.findOne({ where: { email: currentUser.email }, include: Cart });
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const product = await Product.findByPk(product_id);
+    if (!product) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    let cart_id = user.Carts.length > 0 ? user.Carts[0].id : null;
+    const newCartItem = {
+      cart_id,
+      product_id,
+      quantity: quantity || 1, // Default quantity to 1 if not provided
+    };
+
+    if (!cart_id) {
+      const newCart = await Cart.create({ user_id: user.id });
+      cart_id = newCart.id;
+      newCartItem.cart_id = cart_id;
+    }
+
+    await CartItem.create(newCartItem);
+
+    return res.status(201).json({ message: 'Item added to cart successfully!' });
+  } catch (error) {
+    console.error('Error adding item to cart:', error);
+    return res.status(500).json({ message: 'Failed to add item to cart' });
+  }
+});
+
+
+
 // Route to update cart item quantity
 router.post('/api/cart/update', authenticateJWT, async (req, res) => {
   const { product_id, quantity } = req.body;
