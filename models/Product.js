@@ -8,28 +8,28 @@ Product.init(
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
-      autoIncrement: true, // Assuming auto-increment
+      autoIncrement: true, // Auto-incremented ID
       allowNull: false,
     },
     name: {
       type: DataTypes.STRING(100),
-      allowNull: false,
+      allowNull: false, // Product name is required
     },
     category: {
       type: DataTypes.STRING(100),
-      allowNull: false,
+      allowNull: false, // Category is required
     },
     image: {
-      type: DataTypes.STRING(200),
-      allowNull: false,
+      type: DataTypes.STRING(200), // Stores the path of the image (not the actual image)
+      allowNull: false, // Image is required
     },
     price: {
       type: DataTypes.FLOAT,
-      allowNull: false,
+      allowNull: false, // Price is required
     },
     quantity: {
       type: DataTypes.INTEGER,
-      allowNull: false,
+      allowNull: false, // Quantity defaults to 0 if not provided
       defaultValue: 0,
     },
   },
@@ -37,7 +37,7 @@ Product.init(
     sequelize,
     modelName: 'Product',
     tableName: 'products',
-    timestamps: false,
+    timestamps: false, // No timestamps for this model
   }
 );
 

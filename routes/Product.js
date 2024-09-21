@@ -3,6 +3,8 @@ const router = express.Router();
 const { Product, CartItem } = require('../models');  // Assuming Product and CartItem models are defined in Sequelize
 const jwt = require('jsonwebtoken');  // JWT for authentication
 const { authenticateJWT } = require('../middleware/auth');  // JWT authentication middleware
+const multer = require('multer');
+const path = require('path');
 
 // Fetch all products
 router.get('/api/products', async (req, res) => {
@@ -25,18 +27,52 @@ router.get('/api/products', async (req, res) => {
 });
 
 // Add a new product (Requires JWT authentication)
-router.post('/api/products', authenticateJWT, async (req, res) => {
-  const { name, category, price, image, quantity } = req.body;
+// Set up multer for file uploads
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'uploads/'); // Directory to save images
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname)); // Unique filename
+  },
+});
 
-  if (!name || !category || !price || !image) {
-    return res.status(400).json({ message: 'All fields are required' });
+// File filter to accept only certain types of files (like images)
+const fileFilter = (req, file, cb) => {
+  const allowedTypes = /jpeg|jpg|png|gif/;
+  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+  const mimetype = allowedTypes.test(file.mimetype);
+  
+  if (mimetype && extname) {
+    return cb(null, true);
+  } else {
+    cb(new Error('Only images are allowed'));
+  }
+};
+
+// Apply the storage and file filter configurations to multer
+const upload = multer({
+  storage: storage,
+  fileFilter: fileFilter,
+  limits: { fileSize: 1024 * 1024 * 5 }, // Limit file size to 5MB
+});
+
+// Add a new product (Requires JWT authentication)
+router.post('/api/products', authenticateJWT, upload.single('image'), async (req, res) => {
+  const { name, category, price, quantity } = req.body;
+  
+  if (!name || !category || !price || !req.file) {
+    return res.status(400).json({ message: 'All fields are required, including the image' });
   }
 
   try {
+    const imagePath = req.file.path; // Access the file path where the image is stored
+
     const newProduct = await Product.create({
       name,
       category,
-      image,
+      image: imagePath, // Store the file path in the database
       price: parseFloat(price),  // Convert price to float
       quantity: quantity || 0,   // Default to 0 if quantity is not provided
     });
@@ -47,6 +83,8 @@ router.post('/api/products', authenticateJWT, async (req, res) => {
     return res.status(500).json({ message: 'Failed to add product', error });
   }
 });
+
+
 
 // Update product details (Requires JWT authentication)
 router.put('/api/update_product/:product_id', authenticateJWT, async (req, res) => {
