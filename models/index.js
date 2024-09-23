@@ -9,8 +9,8 @@ const Transaction = require('./Transaction');
 // Define Associations
 
 // User <-> Cart
-User.hasMany(Cart, { foreignKey: 'user_id', as: 'carts' });
-Cart.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+User.hasMany(Cart, { foreignKey: 'user_id', as: 'Carts' });
+Cart.belongsTo(User, { foreignKey: 'user_id', as: 'User' });  
 
 // Cart <-> CartItem
 Cart.hasMany(CartItem, { foreignKey: 'cart_id', as: 'items' });

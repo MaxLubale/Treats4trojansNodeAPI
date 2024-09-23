@@ -47,12 +47,16 @@ router.post('/api/cart', authenticateJWT, async (req, res) => {
   const currentUser = req.user; // Assuming your JWT middleware sets req.user
 
   try {
-    const user = await User.findOne({ where: { email: currentUser.email }, include: Cart });
+    const user = await User.findOne({
+      where: { email: currentUser.email },
+      include: [{ model: Cart, as: 'Carts' }], // Use the alias 'Carts'
+    });
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    const product = await Product.findByPk(product_id);
+    const product = await Product.findByPk(Number(product_id));
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -78,6 +82,7 @@ router.post('/api/cart', authenticateJWT, async (req, res) => {
     return res.status(500).json({ message: 'Failed to add item to cart' });
   }
 });
+
 
 
 
