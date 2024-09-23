@@ -6,7 +6,7 @@
     "start": "node ./bin/www",
     "sync": "node sync.js",
     "sequelize": "sequelize",
-    "build": "babel . -d dist --ignore dist,node_modules"
+    "build": "npx babel . -d dist --ignore dist,node_modules"
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
