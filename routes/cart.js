@@ -43,7 +43,9 @@ router.get('/api/cart', authenticateJWT, async (req, res) => {
       product_id: item.product.id,  // Accessing product using the correct alias
       name: item.product.name,
       price: item.product.price,
-      quantity: item.quantity
+      quantity: item.quantity,
+      image: item.product.image
+
     }));
 
     return res.status(200).json(result);
