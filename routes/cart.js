@@ -3,6 +3,8 @@ const router = express.Router();
 const { Cart, CartItem, Product, User } = require('../models');  // Assuming models are defined with Sequelize
 const { authenticateJWT } = require('../middleware/auth');  // JWT authentication middleware
 
+
+
 // Route to fetch cart items
 router.get('/api/cart', authenticateJWT, async (req, res) => {
   try {
@@ -13,33 +15,45 @@ router.get('/api/cart', authenticateJWT, async (req, res) => {
       return res.status(401).json({ message: 'Invalid token' });
     }
 
-    const user = await User.findOne({ where: { email }, include: Cart });
+    const user = await User.findOne({
+      where: { email },
+      include: [{ model: Cart, as: 'Carts' }]  // Specify the alias for Carts
+    });
+
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
     const cart = user.Carts[0];  // Assuming user has one cart
+
     if (!cart) {
       return res.status(200).json([]);  // Return empty array if no cart
     }
 
-    const cartItems = await CartItem.findAll({ where: { cart_id: cart.id }, include: Product });
+    const cartItems = await CartItem.findAll({
+      where: { cart_id: cart.id },
+      include: [{ model: Product, as: 'product' }]  // Use the correct alias for Product
+    });
+
     if (cartItems.length === 0) {
       return res.status(200).json([]);  // Return empty array if no items
     }
 
     const result = cartItems.map(item => ({
-      product_id: item.Product.id,
-      name: item.Product.name,
-      price: item.Product.price,
+      product_id: item.product.id,  // Accessing product using the correct alias
+      name: item.product.name,
+      price: item.product.price,
       quantity: item.quantity
     }));
 
     return res.status(200).json(result);
   } catch (error) {
+    console.error('Error retrieving cart items:', error);  // Log the error for debugging
     return res.status(500).json({ message: 'Error retrieving cart items' });
   }
 });
+
+
 
 // Route to add items to cart
 router.post('/api/cart', authenticateJWT, async (req, res) => {
