@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');  // JWT for authentication
 const { authenticateJWT } = require('../middleware/auth');  // JWT authentication middleware
 const multer = require('multer');
 const path = require('path');
+const upload = require('./upload'); 
 
 // Fetch all products
 router.get('/api/products', async (req, res) => {
@@ -61,7 +62,7 @@ const upload = multer({
 // Add a new product (Requires JWT authentication)
 router.post('/api/products', authenticateJWT, upload.single('image'), async (req, res) => {
   const { name, category, price, quantity } = req.body;
-  
+
   if (!name || !category || !price || !req.file) {
     return res.status(400).json({ message: 'All fields are required, including the image' });
   }

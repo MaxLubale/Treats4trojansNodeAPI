@@ -9,6 +9,7 @@ const { sequelize } = require('./models'); // Sequelize instance
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const helmet = require('helmet');
+const path = require('path');
 const cors = require('cors');
 
 // Load environment variables from .env
@@ -26,6 +27,8 @@ app.use('/', adminRoutes);
 app.use('/', promoRoutes); // Promo code routes
 app.use('/', cartRoutes)
 app.use('/', productRoutes)
+// Serve static files from the 'uploads' directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Start the server after ensuring database connection
 const PORT = process.env.PORT || 8000;
