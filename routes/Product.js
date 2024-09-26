@@ -5,27 +5,29 @@ const jwt = require('jsonwebtoken');  // JWT for authentication
 const { authenticateJWT } = require('../middleware/auth');  // JWT authentication middleware
 const multer = require('multer');
 const path = require('path');
-const upload = require('./upload'); 
+
 
 // Fetch all products
 router.get('/api/products', async (req, res) => {
   try {
-    const products = await Product.findAll();
+   const products = await Product.findAll();
+
+    // Construct the correct image URL
     const result = products.map(product => ({
       id: product.id,
       name: product.name,
-      category: product.category,
-      image: product.image,
+     category: product.category,
+      image: product.image, // Use the static file server
       price: product.price,
-      quantity: product.quantity,
+     quantity: product.quantity,
     }));
 
-    return res.status(200).json(result);
+   return res.status(200).json(result);
   } catch (error) {
-    console.error('Error fetching products:', error);
+   console.error('Error fetching products:', error);
     return res.status(500).json({ message: 'Failed to fetch products', error });
-  }
-});
+ }1});
+
 
 // Add a new product (Requires JWT authentication)
 // Set up multer for file uploads
@@ -60,20 +62,19 @@ const upload = multer({
 });
 
 // Add a new product (Requires JWT authentication)
-router.post('/api/products', authenticateJWT, upload.single('image'), async (req, res) => {
-  const { name, category, price, quantity } = req.body;
+router.post('/api/products', authenticateJWT, async (req, res) => {
+  const { name, category, price, quantity, image } = req.body;
 
-  if (!name || !category || !price || !req.file) {
-    return res.status(400).json({ message: 'All fields are required, including the image' });
+  // Check for required fields
+  if (!name || !category || !price || !image) {
+    return res.status(400).json({ message: 'All fields are required, including the image URL' });
   }
 
   try {
-    const imagePath = req.file.path; // Access the file path where the image is stored
-
     const newProduct = await Product.create({
       name,
       category,
-      image: imagePath, // Store the file path in the database
+      image, // Store the image URL in the database
       price: parseFloat(price),  // Convert price to float
       quantity: quantity || 0,   // Default to 0 if quantity is not provided
     });
@@ -84,6 +85,7 @@ router.post('/api/products', authenticateJWT, upload.single('image'), async (req
     return res.status(500).json({ message: 'Failed to add product', error });
   }
 });
+
 
 
 
