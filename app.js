@@ -19,7 +19,9 @@ dotenv.config();
 app.use(express.json());
 app.use(morgan('dev')); // HTTP request logger
 app.use(helmet()); // Secure HTTP headers
-app.use(cors()); // Enable CORS
+
+// Enable CORS 
+app.use(cors());
 
 // Use the user, admin, and promo routes
 app.use('/', userRoutes);
@@ -27,26 +29,28 @@ app.use('/', adminRoutes);
 app.use('/', promoRoutes); // Promo code routes
 app.use('/', cartRoutes)
 app.use('/', productRoutes)
+
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 
 // Start the server after ensuring database connection
 const PORT = process.env.PORT || 8000;
 
 const startServer = async () => {
   try {
-      await sequelize.authenticate();
-      console.log('Database connected successfully.');
+    await sequelize.authenticate();
+    console.log('Database connected successfully.');
 
-      // Sync models
-      await sequelize.sync({ alter: true });
+    // Sync models
+    await sequelize.sync({ alter: true });
 
-      app.listen(PORT, () => {
-          console.log(`Server is running on port ${PORT}.`);
-      });
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}.`);
+    });
   } catch (error) {
-      console.error('Unable to connect to the database:', error);
-      console.error('Detailed error:', error.original || error.message || error);
+    console.error('Unable to connect to the database:', error);
+    console.error('Detailed error:', error.original || error.message || error);
   }
 };
 
