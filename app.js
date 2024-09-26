@@ -3,15 +3,19 @@ const app = express();
 const userRoutes = require('./routes/user');  // User routes
 const adminRoutes = require('./routes/admin');  // Admin routes
 const promoRoutes = require('./routes/promoCode');  // Promo code routes
-const cartRoutes = require('./routes/cart')
-const productRoutes = require('./routes/Product')
+const cartRoutes = require('./routes/cart');
+const productRoutes = require('./routes/Product');
 const { sequelize } = require('./models'); // Sequelize instance
+const paypalRoutes = require('./routes/paypalRoutes.js')
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const helmet = require('helmet');
 const path = require('path');
 const cors = require('cors');
 
+// Enable CORS
+app.use(cors());
+app.use(express.static("client"));
 // Load environment variables from .env
 dotenv.config();
 
@@ -20,8 +24,8 @@ app.use(express.json());
 app.use(morgan('dev')); // HTTP request logger
 app.use(helmet()); // Secure HTTP headers
 
-// Enable CORS 
-app.use(cors());
+
+
 
 // Use the user, admin, and promo routes
 app.use('/', userRoutes);
@@ -29,6 +33,9 @@ app.use('/', adminRoutes);
 app.use('/', promoRoutes); // Promo code routes
 app.use('/', cartRoutes)
 app.use('/', productRoutes)
+app.use('/', paypalRoutes);
+
+
 
 // Serve static files from the 'uploads' directory
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
