@@ -5,7 +5,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 
 const router = express.Router();
-const base = 'https://api-m.sandbox.paypal.com';
+const base = 'https://api-m.paypal.com';
 
 // Function to generate PayPal access token
 async function generateAccessToken() {
