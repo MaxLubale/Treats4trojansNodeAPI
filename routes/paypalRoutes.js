@@ -110,11 +110,15 @@ router.post('/api/orders/:orderID/capture', async (req, res) => {
   try {
     const { orderID } = req.params;
     const { jsonResponse, httpStatusCode } = await captureOrder(orderID);
+
+    // Check if httpStatusCode is not 200
+    if (httpStatusCode !== 200) {
+      console.error('Capture order failed:', jsonResponse);
+    }
+
     res.status(httpStatusCode).json(jsonResponse);
   } catch (error) {
     console.error('Failed to capture order:', error);
     res.status(500).json({ error: 'Failed to capture order.' });
   }
 });
-
-module.exports = router;
