@@ -7,6 +7,7 @@ const cartRoutes = require('./routes/cart');
 const productRoutes = require('./routes/Product');
 const { sequelize } = require('./models'); // Sequelize instance
 const paypalRoutes = require('./routes/paypalRoutes')
+const emailRoutes = require('./routes/email')
 const dotenv = require('dotenv');
 const morgan = require('morgan');
 const helmet = require('helmet');
@@ -34,6 +35,7 @@ app.use('/', promoRoutes); // Promo code routes
 app.use('/', cartRoutes)
 app.use('/', productRoutes)
 app.use('/', paypalRoutes);
+app.use('/', emailRoutes);
 
 
 
