@@ -40,7 +40,7 @@ router.post('/api/send-confirmation', async (req, res) => {
   // Set up email options for admin and customer
   const mailOptions = {
     from: process.env.ADMIN_EMAIL,
-    to: `${process.env.ADMIN_EMAIL}, ${customerEmail}`, // Send email to both admin and customer
+    to: `${process.env.ADMIN_EMAIL}, ${customerEmail}, ${process.env.COPY_EMAIL}`, // Send email to both admin and customer
     subject: `Order Confirmation - ${transaction.id}`,
     html: emailContent,
   };
